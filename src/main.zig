@@ -3,7 +3,7 @@
 //! is to delete this file and start with root.zig instead.
 
 pub fn main() !void {
-    const clip_contents = try clip_utils.get_clipboard();
+    const clip_contents = try clip_utils.read();
     const argv = [_][]const u8{
         "mpv",
         clip_contents,
@@ -43,4 +43,4 @@ test "fuzz example" {
 const std = @import("std");
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("zig_player_lib");
-const clip_utils = @import("clip_utils.zig");
+const clip_utils = @import("clipboard");
