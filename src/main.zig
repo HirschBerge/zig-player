@@ -3,16 +3,20 @@
 //! is to delete this file and start with root.zig instead.
 
 pub fn main() !void {
+    const clip_contents = try clip_utils.get_clipboard();
     const argv = [_][]const u8{
         "mpv",
-        "https://www.youtube.com/watch?v=3pdkMH52Wls",
+        clip_contents,
         "--no-terminal",
     };
+    // try clipboard.write("Zig ⚡");
+    // std.debug.print("{s}\n", .{clip_contents catch "Nothing to see here"});
     var child = std.process.Child.init(&argv, std.heap.page_allocator);
     try child.spawn();
     const exit_code = child.wait();
     try std.testing.expectEqual(exit_code, std.process.Child.Term{ .Exited = 0 });
 }
+
 
 test "simple test" {
     var list = std.ArrayList(i32).init(std.testing.allocator);
@@ -37,6 +41,6 @@ test "fuzz example" {
 }
 
 const std = @import("std");
-
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("zig_player_lib");
+const clip_utils = @import("clip_utils.zig");
