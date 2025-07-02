@@ -11,3 +11,12 @@ I want it to replace my [yt script](https://github.com/HirschBerge/Public-dots/b
 - Quick rewatch last
 - Show mpv queue
 - Maybe have built-in queue in case I want to support other players such as vlc?
+
+## Install and build
+
+```nu
+jj git clone (wl-paste) # Copy to clipboard
+cd ./zig_player
+zig init # Generates build filers for your platform
+zig build run
+```
