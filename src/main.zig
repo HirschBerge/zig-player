@@ -15,7 +15,6 @@ pub fn main() !void {
     try databses.read_db(&dbase);
 }
 
-
 fn filter_clipboard(clip: []const u8) bool {
     const url = "http";
     if (std.mem.indexOf(u8, clip, url) != null) {
@@ -50,8 +49,6 @@ test "invalid url" {
     const result = filter_clipboard(input);
     std.debug.assert(result == false);
 }
-
-
 
 const std = @import("std");
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
