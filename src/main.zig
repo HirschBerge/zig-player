@@ -10,7 +10,11 @@ pub fn main() !void {
     } else {
         // std.debug.print("Not playing {s}", "video");
     }
+    var dbase = try databses.init_db();
+    try databses.insert_data(&dbase);
+    try databses.read_db(&dbase);
 }
+
 
 fn filter_clipboard(clip: []const u8) bool {
     const url = "http";
@@ -47,7 +51,11 @@ test "invalid url" {
     std.debug.assert(result == false);
 }
 
+
+
 const std = @import("std");
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 // const lib = @import("zig_player_lib");
 const clip_utils = @import("clipboard");
+const sqlite = @import("sqlite");
+const databses = @import("database.zig");
