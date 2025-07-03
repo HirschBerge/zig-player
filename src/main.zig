@@ -9,15 +9,16 @@ pub fn main() !void {
         try play_video(clip_contents);
     } else {
         // std.debug.print("Not playing {s}", "video");
-    }}
+    }
+}
 
 fn filter_clipboard(clip: []const u8) bool {
-    const url= "http";
+    const url = "http";
     if (std.mem.indexOf(u8, clip, url) != null) {
-        std.debug.print("Attempting to play '{s}'\n", .{ clip });
+        std.debug.print("Attempting to play '{s}'\n", .{clip});
         return true;
     } else {
-        std.debug.print("'{s}' is NOT a URL\n", .{ clip});
+        std.debug.print("'{s}' is NOT a URL\n", .{clip});
         return false;
     }
 }
