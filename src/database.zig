@@ -38,7 +38,11 @@ pub fn read_db(dbase: *sqlite.Db) !void {
     }
 }
 
-pub fn insert_data(dbase: *sqlite.Db) !void {
+const Metadata = @import("ytdlp.zig").Metadata;
+pub fn insert_data(
+    dbase: *sqlite.Db,
+    meta: Metadata,
+) !void {
     const query =
         \\INSERT INTO history(time, url, channel, length, title) VALUES(?, ?, ?, ?, ?)
     ; // 5 placeholders
@@ -51,10 +55,10 @@ pub fn insert_data(dbase: *sqlite.Db) !void {
     // const allocator = std.heap.page_allocator; // Get an allocator for the options
     try stmt.exec(.{}, .{
         .time = time,
-        .url = "https:/yt.be/text",
-        .channel = "DokiBird",
-        .length = "1:43:49",
-        .title = "She did WHAT!?!?",
+        .url = meta.url,
+        .channel = meta.channel,
+        .length = meta.duration,
+        .title = meta.title,
     });
 
     std.debug.print("Data inserted.\n", .{});
