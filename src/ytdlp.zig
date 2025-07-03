@@ -5,6 +5,16 @@ pub const Metadata = struct {
     duration: []const u8,
     title: []const u8,
     url: []const u8,
+    pub fn eql(self: Metadata, other: Metadata) bool {
+        // Compare each field. For slices (like strings), use std.mem.eql
+        if (!std.mem.eql(u8, self.channel, other.channel)) return false;
+        if (!std.mem.eql(u8, self.url, other.url)) return false;
+        if (!std.mem.eql(u8, self.title, other.title)) return false;
+        if (!std.mem.eql(u8, self.duration, other.duration)) return false;
+
+        // If all fields are equal, then the structs are equal
+        return true;
+    }
 };
 
 pub fn parse_json(data: []const u8) !Metadata {

@@ -43,6 +43,18 @@ test "valid url" {
     std.debug.assert(result == true);
 }
 
+test "parse meta" {
+    const expected = ytdlp.Metadata{
+        .channel = "Jonkero",
+        .url = "https://www.youtube.com/watch?v=3pdkMH52Wls",
+        .title = "Code Your Own Web Server BackEnd REST API with Rust lang",
+        .duration = "00:24:38",
+    };
+    const input = "https://www.youtube.com/watch?v=3pdkMH52Wls";
+    const result = try ytdlp.parse_json(try ytdlp.ytdlp_meta(input));
+    std.debug.assert(result.eql(expected));
+}
+
 test "invalid url" {
     const input = "Single goth women in my zip code";
     const result = filter_clipboard(input);
