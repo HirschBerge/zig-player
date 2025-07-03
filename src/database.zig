@@ -11,21 +11,17 @@ pub fn read_db(dbase: *sqlite.Db) !void {
     defer stmt.deinit();
     const allocator = std.heap.page_allocator;
     const HistoryRow = struct {
-        time: []const u8,    // Using []const u8 as it's read-only data
+        time: []const u8, // Using []const u8 as it's read-only data
         url: []const u8,
         channel: []const u8,
         length: []const u8,
         title: []const u8,
     };
-    const rows = try stmt.all(
-        HistoryRow, // 1. The type of each row (your struct)
-        allocator,  // 2. The allocator for the `[]HistoryRow` array
-        .{},
-        .{}
-    );
-    // CRITICAL: Defer freeing the allocated array of rows when you're done with it.
+    const rows = try stmt.all(HistoryRow, // 1. The type of each row (your struct)
+        allocator, // 2. The allocator for the `[]HistoryRow` array
+        .{}, .{});
     defer allocator.free(rows);
-
+    std.debug.print("Number of rows: {d}\n", .{rows.len});
     if (rows.len == 0) {
         std.log.debug("No rows found in history table.", .{});
     } else {

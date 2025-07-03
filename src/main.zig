@@ -4,14 +4,14 @@
 
 pub fn main() !void {
     const clip_contents = try clip_utils.read();
+    var dbase = try databses.init_db();
     const valid_clip: bool = filter_clipboard(clip_contents);
     if (valid_clip) {
         try play_video(clip_contents);
+        try databses.insert_data(&dbase);
     } else {
         // std.debug.print("Not playing {s}", "video");
     }
-    var dbase = try databses.init_db();
-    try databses.insert_data(&dbase);
     try databses.read_db(&dbase);
 }
 
