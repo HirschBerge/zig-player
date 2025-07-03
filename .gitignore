@@ -1,6 +1,4 @@
 .zig-cache/
 zig-out/
 *.o
-build.zig
-build.zig.zon
 mydata.db
