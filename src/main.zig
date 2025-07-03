@@ -4,7 +4,22 @@
 
 pub fn main() !void {
     const clip_contents = try clip_utils.read();
-    try play_video(clip_contents);
+    const valid_clip: bool = filter_clipboard(clip_contents);
+    if (valid_clip) {
+        try play_video(clip_contents);
+    } else {
+        // std.debug.print("Not playing {s}", "video");
+    }}
+
+fn filter_clipboard(clip: []const u8) bool {
+    const url= "http";
+    if (std.mem.indexOf(u8, clip, url) != null) {
+        std.debug.print("Attempting to play '{s}'\n", .{ clip });
+        return true;
+    } else {
+        std.debug.print("'{s}' is NOT a URL\n", .{ clip});
+        return false;
+    }
 }
 
 fn play_video(url: []const u8) !void {
@@ -19,6 +34,17 @@ fn play_video(url: []const u8) !void {
     // try std.testing.expectEqual(exit_code, std.process.Child.Term{ .Exited = 0 });
 }
 
+test "valid url" {
+    const input = "https://www.youtube.com/watch?v=3pdkMH52Wls";
+    const result = filter_clipboard(input);
+    std.debug.assert(result == true);
+}
+
+test "invalid url" {
+    const input = "Single goth women in my zip code";
+    const result = filter_clipboard(input);
+    std.debug.assert(result == false);
+}
 
 const std = @import("std");
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
