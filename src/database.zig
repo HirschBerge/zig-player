@@ -151,7 +151,6 @@ pub fn init_db() !sqlite.Db {
         }
     };
     std.debug.print("Attempting to open database at: '{s}'\n", .{cstring_path}); // <-- ADD THIS
-    defer allocator.free(cstring_path);
 
     std.debug.print("Database location: {s}\n", .{cstring_path});
 
@@ -163,6 +162,7 @@ pub fn init_db() !sqlite.Db {
         },
         .threading_mode = .MultiThread,
     });
+    defer allocator.free(cstring_path);
     try db.exec("CREATE TABLE IF NOT EXISTS history(time text primary key, url text, channel text, length text, title text)", .{}, .{});
     return db;
 }
