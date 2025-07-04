@@ -106,8 +106,8 @@ pub fn get_cache_location(allocator: std.mem.Allocator) ![]const u8 {
                         var default_cache_path = std.ArrayList(u8).init(allocator);
                         defer default_cache_path.deinit(); // Deinit the ArrayList itself
                         try default_cache_path.appendSlice(home_dir);
-                        try default_cache_path.appendSlice(".cache"); // The XDG default cache subdir
                         try default_cache_path.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
+                        try default_cache_path.appendSlice(".cache"); // The XDG default cache subdir
                         // Return the owned slice from the ArrayList
                         return default_cache_path.toOwnedSlice();
                     },
@@ -128,26 +128,28 @@ pub fn init_db() !sqlite.Db {
 
     const db_dirname = try get_cache_location(allocator);
     defer allocator.free(db_dirname);
-    std.debug.print("Attempting to create application cache directory: '{s}'\n", .{db_dirname});
-    std.fs.makeDirAbsolute(db_dirname) catch |dir_err| {
-        if (dir_err == error.PathAlreadyExists) {} else {
-            // Handle other errors (e.g., permissions, invalid path segments)
-            std.debug.print("Failed to create application cache directory '{s}': {any}\n", .{ db_dirname, dir_err });
-            return dir_err; // Propagate the error if directory couldn't be created
-        }
-    };
     var db_loc = std.ArrayList(u8).init(allocator);
     // Defer deiniting the ArrayList structure itself.
     // The memory it held will be transferred to 'final_db_path_c_string' by toOwnedSliceSentinel().
     defer db_loc.deinit();
 
     try db_loc.appendSlice(db_dirname);
+    try db_loc.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
     try db_loc.appendSlice("zig_player"); // program path
     try db_loc.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
     try db_loc.appendSlice("history.db");
     // NOTE: Must be a c-string for whatever reason
     try db_loc.append(0);
     const cstring_path: [:0]const u8 = try db_loc.toOwnedSliceSentinel(0);
+    const base_name = std.fs.path.dirname(cstring_path).?;
+    std.debug.print("Attempting to create application cache directory: '{s}'\n", .{base_name});
+    std.fs.makeDirAbsolute(base_name) catch |dir_err| {
+        if (dir_err == error.PathAlreadyExists) {} else {
+            // Handle other errors (e.g., permissions, invalid path segments)
+            std.debug.print("Failed to create application cache directory '{s}': {any}\n", .{ base_name, dir_err });
+            return dir_err; // Propagate the error if directory couldn't be created
+        }
+    };
     std.debug.print("Attempting to open database at: '{s}'\n", .{cstring_path}); // <-- ADD THIS
     defer allocator.free(cstring_path);
 
