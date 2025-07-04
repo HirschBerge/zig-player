@@ -54,7 +54,14 @@ pub fn parse_json(data: []const u8) !Metadata {
 
 pub fn ytdlp_meta(url: []const u8) ![]const u8 {
     const allocator = std.heap.page_allocator; // Allocator for the child's output
-    const argv = [6][]const u8{ "yt-dlp", url, "--cookies-from-browser", "firefox", "--print", "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)j\", \"url\": \"%(webpage_url)s\"}", };
+    const argv = [6][]const u8{
+        "yt-dlp",
+        url,
+        "--cookies-from-browser",
+        "firefox",
+        "--print",
+        "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)j\", \"url\": \"%(webpage_url)s\"}",
+    };
     const result = try std.process.Child.run(.{
         .argv = &argv, // Pass a pointer to the argv array
         .allocator = allocator, // The allocator used to store captured stdout/stderr
