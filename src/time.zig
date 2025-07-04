@@ -20,6 +20,5 @@ pub fn get_current_time() ![]u8 {
     const dt = now_local.time();
     var buffer: [50]u8 = undefined;
     const formatted = try dt.bufPrint(&buffer, .rfc3339);
-    std.debug.print("{s}\n", .{formatted}); // Added newline for cleaner output
     return allocator.dupe(u8, formatted);
 }

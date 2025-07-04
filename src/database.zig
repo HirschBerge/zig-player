@@ -60,8 +60,6 @@ pub fn insert_data(
         .length = meta.duration,
         .title = meta.title,
     });
-
-    std.debug.print("Data inserted.\n", .{});
 }
 
 pub fn init_db() !sqlite.Db {

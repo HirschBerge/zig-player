@@ -14,7 +14,12 @@ pub fn main() !void {
     const meta = try ytdlp.ytdlp_meta(clip_contents);
     const parsed_meta = try ytdlp.parse_json(meta);
     try databses.insert_data(&dbase, parsed_meta);
-    std.debug.print("Channel: {s}\nDuration: {s}\nTitle: {s}\nUrl: {s}\n", .{ parsed_meta.channel, parsed_meta.duration, parsed_meta.title, parsed_meta.url });
+    std.debug.print("Channel: {s} Duration: {s} Title: {s} Url: {s}\n", .{
+        parsed_meta.channel,
+        parsed_meta.duration,
+        parsed_meta.title,
+        parsed_meta.url,
+    });
     try databses.read_db(&dbase);
 }
 

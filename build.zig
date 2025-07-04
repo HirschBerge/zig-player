@@ -14,6 +14,9 @@ pub fn build(b: *std.Build) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
+    const fmt_step = b.addFormat("fmt", .{});
+    // Set the max line length here for zig fmt
+    fmt_step.max_line_len = 100; // <--- Set your desired maximum line length
 
     // This creates a "module", which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.

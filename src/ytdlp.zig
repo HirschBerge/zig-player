@@ -17,11 +17,35 @@ pub const Metadata = struct {
     }
 };
 
+pub fn handles_quote_literals(input: []const u8, allocator: std.mem.Allocator) ![]const u8 {
+    var result_list = std.ArrayList(u8).init(allocator);
+    defer result_list.deinit(); // Ensure the ArrayList's buffer is freed
+
+    var i: usize = 0;
+    while (i < input.len) {
+        // Check if the current position starts with '""'
+        if (i + 1 < input.len and input[i] == '"' and input[i + 1] == '"') {
+            // If it's '""', skip the first
+            try result_list.append(input[i]);
+            i += 2;
+        } else if (i + 1 < input.len and input[i] == '\\' and input[i + 1] == '"') {
+            try result_list.append('\'');
+            i += 2;
+        } else {
+            // Otherwise, append the current character to the result
+            try result_list.append(input[i]);
+            i += 1;
+        }
+    }
+
+    return result_list.toOwnedSlice();
+}
 pub fn parse_json(data: []const u8) !Metadata {
+    const clean_json = try handles_quote_literals(data, std.heap.page_allocator);
     const parsed = try std.json.parseFromSlice(
         Metadata,
         std.heap.page_allocator,
-        data,
+        clean_json,
         .{},
     );
     defer parsed.deinit();
@@ -30,14 +54,7 @@ pub fn parse_json(data: []const u8) !Metadata {
 
 pub fn ytdlp_meta(url: []const u8) ![]const u8 {
     const allocator = std.heap.page_allocator; // Allocator for the child's output
-    const argv = [6][]const u8{
-        "yt-dlp",
-        url,
-        "--cookies-from-browser",
-        "firefox",
-        "--print",
-        "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)s\", \"url\": \"%(webpage_url)s\"}",
-    };
+    const argv = [6][]const u8{ "yt-dlp", url, "--cookies-from-browser", "firefox", "--print", "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)j\", \"url\": \"%(webpage_url)s\"}", };
     const result = try std.process.Child.run(.{
         .argv = &argv, // Pass a pointer to the argv array
         .allocator = allocator, // The allocator used to store captured stdout/stderr
@@ -61,8 +78,5 @@ pub fn ytdlp_meta(url: []const u8) ![]const u8 {
         return error.YtDlpError;
     }
 
-    // `result.stdout` contains the captured output as a `[]const u8` slice.
-    // This slice is owned by the `allocator` you passed to `Child.run`.
-    // The caller is now responsible for freeing it.
     return result.stdout;
 }
