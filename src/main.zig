@@ -1,4 +1,3 @@
-
 pub fn main() !void {
     const clip_contents = try clip_utils.read();
     var dbase = try databses.init_db();
@@ -7,11 +6,15 @@ pub fn main() !void {
         std.log.err("Clipboard does not contain a url {}", .{error.URLNotFound});
         std.process.exit(1);
     }
-    try play_video(clip_contents);
+    switch (builtin.os.tag) {
+        .windows => try win.play_video(clip_contents),
+        .linux, .freebsd, .openbsd, .macos, .netbsd, .dragonfly => try unix.play_video(clip_contents),
+        else => @compileError("platform not currently supported"),
+    }
     const meta = try ytdlp.ytdlp_meta(clip_contents);
     const parsed_meta = try ytdlp.parse_json(meta);
     try databses.insert_data(&dbase, parsed_meta);
-    std.debug.print("Channel: {s}\nDuration: {s}\nTitle: {s}\nUrl: {s}\n", .{parsed_meta.channel, parsed_meta.duration, parsed_meta.title, parsed_meta.url});
+    std.debug.print("Channel: {s}\nDuration: {s}\nTitle: {s}\nUrl: {s}\n", .{ parsed_meta.channel, parsed_meta.duration, parsed_meta.title, parsed_meta.url });
     try databses.read_db(&dbase);
 }
 
@@ -24,17 +27,6 @@ fn filter_clipboard(clip: []const u8) bool {
         std.debug.print("'{s}' is NOT a URL\n", .{clip});
         return false;
     }
-}
-
-
-fn play_video(url: []const u8) !void {
-    const argv = [3][]const u8{
-        "mpv",
-        url,
-        "--no-terminal",
-    };
-    var child = std.process.Child.init(&argv, std.heap.page_allocator);
-    try child.spawn();
 }
 
 test "valid url" {
@@ -68,3 +60,6 @@ const clip_utils = @import("clipboard");
 const sqlite = @import("sqlite");
 const databses = @import("database.zig");
 const ytdlp = @import("ytdlp.zig");
+const builtin = @import("builtin");
+const unix = @import("unix.zig");
+const win = @import("windows.zig");
