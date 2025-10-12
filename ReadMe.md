@@ -31,5 +31,5 @@ zig init # Generates build filers for your platform
 zig fetch --save git+https://github.com/dgv/clipboard
 zig fetch --save git+https://github.com/vrischmann/zig-sqlite
 zig fetch --save git+https://github.com/rockorager/zeit
-zig build run
+zig build run --release=fast
 ```

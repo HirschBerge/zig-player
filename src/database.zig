@@ -27,15 +27,15 @@ pub fn read_db(dbase: *sqlite.Db) !void {
         std.log.debug("No rows found in history table.", .{});
     } else {
         std.log.debug("Found {d} rows in history:", .{rows.len});
-        for (rows) |row| { // Iterate through the slice of rows
-            std.log.debug("time: {s}, url: {s}, channel: {s}, length: {s}, title: {s}", .{
-                row.time,
-                row.url,
-                row.channel,
-                row.length,
-                row.title,
-            });
-        }
+        // for (rows) |row| { // Iterate through the slice of rows
+        //     std.log.debug("time: {s}, url: {s}, channel: {s}, length: {s}, title: {s}", .{
+        //         row.time,
+        //         row.url,
+        //         row.channel,
+        //         row.length,
+        //         row.title,
+        //     });
+        // }
     }
 }
 
@@ -70,53 +70,41 @@ pub fn get_cache_location(allocator: std.mem.Allocator) ![]const u8 {
             const value = std.process.getEnvVarOwned(allocator, envvar) catch |err| {
                 switch (err) {
                     error.EnvironmentVariableNotFound => {
-                        // On Windows, if LocalAppData is not found, what's the fallback?
-                        // Often it's %USERPROFILE%\AppData\Local.
-                        // For simplicity, let's just return an error if not found.
                         std.debug.print("Error: Environment variable '{s}' not found on Windows.\n", .{envvar});
-                        return error.CacheLocationNotFound; // Define a new error or use a general one
+                        return error.CacheLocationNotFound;
                     },
-                    else => return err, // Propagate other errors (e.g., OutOfMemory)
+                    else => return err,
                 }
             };
             return value;
         },
         .linux, .macos => {
             const xdg_cache_home_envvar = "XDG_CACHE_HOME";
-            const xdg_cache_home = std.process.getEnvVarOwned(allocator, xdg_cache_home_envvar) catch |err| {
-                switch (err) {
-                    error.EnvironmentVariableNotFound => {
-                        std.debug.print("Info: Environment variable '{s}' not found. Falling back to default cache location.\n", .{xdg_cache_home_envvar});
-                        // Fallback: $HOME/.cache
-                        const home_envvar = "HOME";
-                        const home_dir = std.process.getEnvVarOwned(allocator, home_envvar) catch |home_err| {
-                            switch (home_err) {
-                                error.EnvironmentVariableNotFound => {
-                                    std.debug.print("Error: Environment variable '{s}' not found. Cannot determine fallback cache location.\n", .{home_envvar});
-                                    // If HOME is also not found, we cannot determine a standard cache location.
-                                    return error.CacheLocationNotFound; // New error or propagate
-                                },
-                                else => return home_err, // Propagate other errors
-                            }
-                        };
-                        // home_dir is now owned by 'allocator', remember to defer free it
-                        defer allocator.free(home_dir);
+            if (std.process.getEnvVarOwned(allocator, xdg_cache_home_envvar)) |path| {
+                return path;
+            } else |err| switch (err) {
+                error.EnvironmentVariableNotFound => {
+                    // Variable not found, so we fall back to the default path.
+                    // This is not an error condition.
+                },
+                else => return err, // Propagate other errors like OutOfMemory.
+            }
 
-                        // Construct the default path: home_dir + "/.cache"
-                        var default_cache_path = std.ArrayList(u8).init(allocator);
-                        defer default_cache_path.deinit(); // Deinit the ArrayList itself
-                        try default_cache_path.appendSlice(home_dir);
-                        try default_cache_path.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
-                        try default_cache_path.appendSlice(".cache"); // The XDG default cache subdir
-                        // Return the owned slice from the ArrayList
-                        return default_cache_path.toOwnedSlice();
+            // Fallback: $HOME/.cache
+            const home_envvar = "HOME";
+            const home_dir = std.process.getEnvVarOwned(allocator, home_envvar) catch |home_err| {
+                switch (home_err) {
+                    error.EnvironmentVariableNotFound => {
+                        std.debug.print("Error: Environment variable '{s}' not found. Cannot determine fallback cache location.\n", .{home_envvar});
+                        return error.CacheLocationNotFound;
                     },
-                    else => return err, // Propagate other errors (e.g., OutOfMemory)
+                    else => return home_err,
                 }
             };
-            return xdg_cache_home;
+            defer allocator.free(home_dir);
+
+            return std.fs.path.join(allocator, &.{ home_dir, ".cache" });
         },
-        // For other OS tags, throw a compile error.
         else => @compileError("Platform '" ++ @tagName(builtin.os.tag) ++ "' not currently supported for cache location detection."),
     }
 }
@@ -128,19 +116,19 @@ pub fn init_db() !sqlite.Db {
 
     const db_dirname = try get_cache_location(allocator);
     defer allocator.free(db_dirname);
-    var db_loc = std.ArrayList(u8).init(allocator);
+    var db_loc = try std.ArrayList(u8).initCapacity(allocator, 0);
     // Defer deiniting the ArrayList structure itself.
     // The memory it held will be transferred to 'final_db_path_c_string' by toOwnedSliceSentinel().
-    defer db_loc.deinit();
+    defer db_loc.deinit(allocator);
 
-    try db_loc.appendSlice(db_dirname);
-    try db_loc.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
-    try db_loc.appendSlice("zig_player"); // program path
-    try db_loc.appendSlice(std.fs.path.sep_str); // Add platform-specific separator
-    try db_loc.appendSlice("history.db");
+    try db_loc.appendSlice(allocator, db_dirname);
+    try db_loc.appendSlice(allocator, std.fs.path.sep_str); // Add platform-specific separator
+    try db_loc.appendSlice(allocator, "zig_player"); // program path
+    try db_loc.appendSlice(allocator, std.fs.path.sep_str); // Add platform-specific separator
+    try db_loc.appendSlice(allocator, "history.db");
     // NOTE: Must be a c-string for whatever reason
-    try db_loc.append(0);
-    const cstring_path: [:0]const u8 = try db_loc.toOwnedSliceSentinel(0);
+    try db_loc.append(allocator, 0);
+    const cstring_path: [:0]const u8 = try db_loc.toOwnedSliceSentinel(allocator, 0);
     const base_name = std.fs.path.dirname(cstring_path).?;
     std.debug.print("Attempting to create application cache directory: '{s}'\n", .{base_name});
     std.fs.makeDirAbsolute(base_name) catch |dir_err| {

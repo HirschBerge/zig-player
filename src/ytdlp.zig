@@ -18,27 +18,27 @@ pub const Metadata = struct {
 };
 
 pub fn handles_quote_literals(input: []const u8, allocator: std.mem.Allocator) ![]const u8 {
-    var result_list = std.ArrayList(u8).init(allocator);
-    defer result_list.deinit(); // Ensure the ArrayList's buffer is freed
+    var result_list = try std.ArrayList(u8).initCapacity(allocator, 0);
+    defer result_list.deinit(allocator); // Ensure the ArrayList's buffer is freed
 
     var i: usize = 0;
     while (i < input.len) {
         // Check if the current position starts with '""'
         if (i + 1 < input.len and input[i] == '"' and input[i + 1] == '"') {
             // If it's '""', skip the first
-            try result_list.append(input[i]);
+            try result_list.append(allocator, input[i]);
             i += 2;
         } else if (i + 1 < input.len and input[i] == '\\' and input[i + 1] == '"') {
-            try result_list.append('\'');
+            try result_list.append(allocator, '\'');
             i += 2;
         } else {
             // Otherwise, append the current character to the result
-            try result_list.append(input[i]);
+            try result_list.append(allocator, input[i]);
             i += 1;
         }
     }
 
-    return result_list.toOwnedSlice();
+    return result_list.toOwnedSlice(allocator);
 }
 pub fn parse_json(data: []const u8) !Metadata {
     const clean_json = try handles_quote_literals(data, std.heap.page_allocator);
