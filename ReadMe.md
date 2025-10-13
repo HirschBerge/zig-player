@@ -31,5 +31,20 @@ zig init # Generates build filers for your platform
 zig fetch --save git+https://github.com/dgv/clipboard
 zig fetch --save git+https://github.com/vrischmann/zig-sqlite
 zig fetch --save git+https://github.com/rockorager/zeit
-zig build run --release=fast
 ```
+## Running
+Requires [just](https://github.com/casey/just) to be installed
+```makefile
+run:
+        zig build run --release=fast
+debug:
+        zig build run
+build:
+        zig build --release=fast
+
+no-build:
+        ./zig-out/bin/zig_player
+test:
+        zig build test
+```
+Or you can always run your favorite zig build commands!
