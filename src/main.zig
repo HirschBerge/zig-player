@@ -1,15 +1,15 @@
 pub fn main() !void {
     const clip_contents = try clip_utils.read();
     var dbase = try databses.init_db();
-    const valid_clip: bool = filter_clipboard(clip_contents);
-    if (!valid_clip) {
-        std.log.err("Clipboard does not contain a url {}", .{error.URLNotFound});
-        std.process.exit(1);
-    }
     switch (builtin.os.tag) {
         .windows => try win.play_video(clip_contents),
         .linux, .freebsd, .openbsd, .macos, .netbsd, .dragonfly => try unix.play_video(clip_contents),
         else => @compileError("platform not currently supported"),
+    }
+    const valid_clip: bool = filter_clipboard(clip_contents);
+    if (!valid_clip) {
+        std.log.err("Clipboard does not contain a url {}", .{error.URLNotFound});
+        std.process.exit(1);
     }
     const meta = try ytdlp.ytdlp_meta(clip_contents);
     const parsed_meta = try ytdlp.parse_json(meta);
@@ -23,6 +23,7 @@ pub fn main() !void {
     try databses.read_db(&dbase);
 }
 
+// NOTE: Immediately stops processing on bad paste
 fn filter_clipboard(clip: []const u8) bool {
     const url = "http";
     if (std.mem.indexOf(u8, clip, url) != null) {
@@ -53,6 +54,7 @@ test "parse meta" {
 }
 
 test "invalid url" {
+    // What was I doing with this test 😵
     const input = "Single goth women in my zip code";
     const result = filter_clipboard(input);
     std.debug.assert(result == false);

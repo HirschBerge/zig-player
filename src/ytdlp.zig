@@ -6,18 +6,17 @@ pub const Metadata = struct {
     title: []const u8,
     url: []const u8,
     pub fn eql(self: Metadata, other: Metadata) bool {
-        // Compare each field. For slices (like strings), use std.mem.eql
+        // NOTE: Compare each field. For slices (like strings), use std.mem.eql
         if (!std.mem.eql(u8, self.channel, other.channel)) return false;
         if (!std.mem.eql(u8, self.url, other.url)) return false;
         if (!std.mem.eql(u8, self.title, other.title)) return false;
         if (!std.mem.eql(u8, self.duration, other.duration)) return false;
-
-        // If all fields are equal, then the structs are equal
         return true;
     }
 };
 
-pub fn handles_quote_literals(input: []const u8, allocator: std.mem.Allocator) ![]const u8 {
+// HACK: YTDLP output can be jank as hell since YT doesn't expect third parties to be doing this.
+pub fn clean_ytdlp_json(input: []const u8, allocator: std.mem.Allocator) ![]const u8 {
     var result_list = try std.ArrayList(u8).initCapacity(allocator, 0);
     defer result_list.deinit(allocator); // Ensure the ArrayList's buffer is freed
 
@@ -41,7 +40,7 @@ pub fn handles_quote_literals(input: []const u8, allocator: std.mem.Allocator) !
     return result_list.toOwnedSlice(allocator);
 }
 pub fn parse_json(data: []const u8) !Metadata {
-    const clean_json = try handles_quote_literals(data, std.heap.page_allocator);
+    const clean_json = try clean_ytdlp_json(data, std.heap.page_allocator);
     const parsed = try std.json.parseFromSlice(
         Metadata,
         std.heap.page_allocator,
@@ -58,13 +57,13 @@ pub fn ytdlp_meta(url: []const u8) ![]const u8 {
         "yt-dlp",
         url,
         "--cookies-from-browser",
-        "firefox",
+        "firefox", // TODO: Make this configurable.
         "--print",
         "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)j\", \"url\": \"%(webpage_url)s\"}",
     };
     const result = try std.process.Child.run(.{
-        .argv = &argv, // Pass a pointer to the argv array
-        .allocator = allocator, // The allocator used to store captured stdout/stderr
+        .argv = &argv,
+        .allocator = allocator,
     });
 
     // Check the exit code of the child process

@@ -7,38 +7,28 @@ pub fn read_db(dbase: *sqlite.Db) !void {
     const query =
         \\SELECT * FROM history
     ;
-
     var stmt = try dbase.prepare(query);
     defer stmt.deinit();
     const allocator = std.heap.page_allocator;
     const HistoryRow = struct {
-        time: []const u8, // Using []const u8 as it's read-only data
+        time: []const u8,
         url: []const u8,
         channel: []const u8,
         length: []const u8,
         title: []const u8,
     };
-    const rows = try stmt.all(HistoryRow, // 1. The type of each row (your struct)
-        allocator, // 2. The allocator for the `[]HistoryRow` array
-        .{}, .{});
+    const rows = try stmt.all(HistoryRow, allocator, .{}, .{});
+    // NOTE: provide user some info about their history state.
     defer allocator.free(rows);
     std.debug.print("Number of rows: {d}\n", .{rows.len});
     if (rows.len == 0) {
         std.log.debug("No rows found in history table.", .{});
     } else {
         std.log.debug("Found {d} rows in history:", .{rows.len});
-        // for (rows) |row| { // Iterate through the slice of rows
-        //     std.log.debug("time: {s}, url: {s}, channel: {s}, length: {s}, title: {s}", .{
-        //         row.time,
-        //         row.url,
-        //         row.channel,
-        //         row.length,
-        //         row.title,
-        //     });
-        // }
     }
 }
 
+// NOTE: Info about video provided and parsed from yt-dlp.
 const Metadata = @import("ytdlp.zig").Metadata;
 pub fn insert_data(
     dbase: *sqlite.Db,
@@ -48,13 +38,10 @@ pub fn insert_data(
         \\INSERT INTO history(time, url, channel, length, title) VALUES(?, ?, ?, ?, ?)
     ; // 5 placeholders
 
-    var stmt = try dbase.prepare(query);
-    defer stmt.deinit();
-
+    var history_records = try dbase.prepare(query);
+    defer history_records.deinit();
     const time = try time_helper.get_current_time();
-
-    // const allocator = std.heap.page_allocator; // Get an allocator for the options
-    try stmt.exec(.{}, .{
+    try history_records.exec(.{}, .{
         .time = time,
         .url = meta.url,
         .channel = meta.channel,
@@ -63,6 +50,7 @@ pub fn insert_data(
     });
 }
 
+// HACK: Housekeeping stuff for file storage/location
 pub fn get_cache_location(allocator: std.mem.Allocator) ![]const u8 {
     switch (builtin.os.tag) {
         .windows => {
@@ -83,11 +71,8 @@ pub fn get_cache_location(allocator: std.mem.Allocator) ![]const u8 {
             if (std.process.getEnvVarOwned(allocator, xdg_cache_home_envvar)) |path| {
                 return path;
             } else |err| switch (err) {
-                error.EnvironmentVariableNotFound => {
-                    // Variable not found, so we fall back to the default path.
-                    // This is not an error condition.
-                },
-                else => return err, // Propagate other errors like OutOfMemory.
+                error.EnvironmentVariableNotFound => {}, // NOTE: Do nothing
+                else => return err,
             }
 
             // Fallback: $HOME/.cache
@@ -109,6 +94,7 @@ pub fn get_cache_location(allocator: std.mem.Allocator) ![]const u8 {
     }
 }
 
+// NOTE: Reads, or starts up our hist db if none exists
 pub fn init_db() !sqlite.Db {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -117,30 +103,28 @@ pub fn init_db() !sqlite.Db {
     const db_dirname = try get_cache_location(allocator);
     defer allocator.free(db_dirname);
     var db_loc = try std.ArrayList(u8).initCapacity(allocator, 0);
-    // Defer deiniting the ArrayList structure itself.
-    // The memory it held will be transferred to 'final_db_path_c_string' by toOwnedSliceSentinel().
     defer db_loc.deinit(allocator);
-
     try db_loc.appendSlice(allocator, db_dirname);
     try db_loc.appendSlice(allocator, std.fs.path.sep_str); // Add platform-specific separator
     try db_loc.appendSlice(allocator, "zig_player"); // program path
     try db_loc.appendSlice(allocator, std.fs.path.sep_str); // Add platform-specific separator
     try db_loc.appendSlice(allocator, "history.db");
+
     // NOTE: Must be a c-string for whatever reason
     try db_loc.append(allocator, 0);
     const cstring_path: [:0]const u8 = try db_loc.toOwnedSliceSentinel(allocator, 0);
     const base_name = std.fs.path.dirname(cstring_path).?;
     std.debug.print("Attempting to create application cache directory: '{s}'\n", .{base_name});
+    // NOTE: We don't care if the path already exists, in fact, that's a success, so if there's an error and it's not PathAlreadyExists, print out error
     std.fs.makeDirAbsolute(base_name) catch |dir_err| {
-        if (dir_err == error.PathAlreadyExists) {} else {
-            // Handle other errors (e.g., permissions, invalid path segments)
+        if (dir_err != error.PathAlreadyExists) {
             std.debug.print("Failed to create application cache directory '{s}': {any}\n", .{ base_name, dir_err });
-            return dir_err; // Propagate the error if directory couldn't be created
+            return dir_err;
         }
     };
-    std.debug.print("Attempting to open database at: '{s}'\n", .{cstring_path}); // <-- ADD THIS
 
-    std.debug.print("Database location: {s}\n", .{cstring_path});
+    std.debug.print("Attempting to open database at: '{s}'\n", .{cstring_path});
+    std.debug.print("Database location: {s}\n", .{cstring_path}); // Handy for user
 
     var db = try sqlite.Db.init(.{
         .mode = sqlite.Db.Mode{ .File = cstring_path }, // Pass the [:0]const u8 type here
