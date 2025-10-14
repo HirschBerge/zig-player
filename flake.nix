@@ -39,7 +39,7 @@
 
         installPhase = ''
           mkdir -p $out/bin
-          install -Dm755 zig-out/bin/${pname} $out/bin/${pname}
+          install -Dm755 ${self}/zig-out/bin/${pname} $out/bin/${pname}
           ln -s $out/bin/${pname} $out/bin/zp
         '';
       };
