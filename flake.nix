@@ -20,7 +20,7 @@
 
     packages = forEachSupportedSystem ({pkgs}: let
       pname = "zig_player";
-      version = "0.5.1";
+      version = "1.0.1";
       deps = pkgs.callPackage ./deps.nix {
         name = "${pname}-cache-${version}";
       };
