@@ -28,18 +28,14 @@
       default = pkgs.stdenv.mkDerivation {
         inherit pname version;
         src = self;
-        nativeBuildInputs = [pkgs.zig];
+        nativeBuildInputs = [pkgs.zig.hook];
 
         zigBuildFlags = [
           "--system"
           "${deps}"
-          "-Dversion-string=${version}"
-          "-Drelease-fast"
         ];
 
-        installPhase = ''
-          mkdir -p $out/bin
-          install -Dm755 ${self}/zig-out/bin/${pname} $out/bin/${pname}
+        postInstall = ''
           ln -s $out/bin/${pname} $out/bin/zp
         '';
       };
