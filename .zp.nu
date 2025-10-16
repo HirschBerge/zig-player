@@ -4,6 +4,14 @@ def rewatch [ ] {
                 print "Rewatching!"
 }
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
+def get-platform-path [] {
+  match $nu.os-info.name {
+    "linux" => { $"($env.HOME)/.cache/zig_player/history.db" },
+    "macos" => { $"($env.HOME)/.cache/zig_player/history.db"},
+    "windows" => { $"($env.LOCALAPPDATA)/zig_player/history.db" },
+    _ => { "Error: Unsupported OS" }
+  }
+}
 def yt_history [ --url (-u) = false] {
     let $history = open ~\AppData\Local\zig_player\history.db
     | get history
