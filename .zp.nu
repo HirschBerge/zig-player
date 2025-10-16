@@ -4,7 +4,7 @@ def rewatch [ ] {
                 print "Rewatching!"
 }
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
-def get-platform-path [] {
+def gen_path [ ] {
   match $nu.os-info.name {
     "linux" => { $"($env.HOME)/.cache/zig_player/history.db" },
     "macos" => { $"($env.HOME)/.cache/zig_player/history.db"},
@@ -13,7 +13,7 @@ def get-platform-path [] {
   }
 }
 def yt_history [ --url (-u) = false] {
-    let $history = open ~\AppData\Local\zig_player\history.db
+    let $history = open (gen_path)
     | get history
     | each { |video|
         if $video.length == "NA" {
