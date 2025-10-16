@@ -3,9 +3,12 @@
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
 
-  outputs = { self, nixpkgs }: let
+  outputs = {
+    self,
+    nixpkgs,
+  }: let
     supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
-    
+
     forEachSupportedSystem = f:
       nixpkgs.lib.genAttrs supportedSystems (system:
         f {
@@ -37,6 +40,8 @@
 
         postInstall = ''
           ln -s $out/bin/${pname} $out/bin/zp
+          mkdir -p $out/share/${pname}
+          install -Dm644 ./.zp.nu $out/share/${pname}/zp.nu
         '';
       };
     });
