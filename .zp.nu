@@ -1,9 +1,3 @@
-def rewatch [ ] {
-        yt_history | uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
-                zig_player
-                print "Rewatching!"
-}
-# NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
 def gen_path [ ] {
   match $nu.os-info.name {
     "linux" => { $"($env.HOME)/.cache/zig_player/history.db" },
@@ -37,3 +31,10 @@ def yt_history [ --url (-u) = false] {
   }
   
 }
+
+def rewatch [ ] {
+        yt_history | uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
+                zig_player
+                print "Rewatching!"
+}
+# NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
