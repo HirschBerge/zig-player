@@ -65,3 +65,43 @@ yt_history
 rewatch
 # I wont show output since it's just a skim tui on the back end, but you can fuzzy search
 ```
+
+## NixOS Users
+
+NixOS users can implement the following to automatically gain access to these functions as well as building the project
+
+```nix
+# flake.nix...
+{
+  description = "My Cool Flake";
+  inputs = {
+    #...
+    zig-player = {
+      url = "github:HirschBerge/zig-player";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+# configuration.nix... 
+{ inputs, pkgs, ... }:
+
+let
+  zig-player = inputs.zig-player.packages.${pkgs.system}.default;
+in
+{
+  # Install the package for all users
+  environment.systemPackages = [ zig-player ];
+...
+}
+
+# Similarly in home.nix to configure nushell...
+...
+{
+  ...
+  programs.nushell = {
+    enable = true;
+    extraConfig = ''
+      source "${zig-player}/share/zig_player/zp.nu"
+    '';
+  };
+}
+```
