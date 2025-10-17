@@ -6,6 +6,15 @@ def gen_path [ ] {
     _ => { "Error: Unsupported OS" }
   }
 }
+
+def paste_to_clip [ url: string ] {
+  match $nu.os-info.name {
+    "linux" => { wl-copy $url },
+    "macos" => { pbcopy $url },
+    "windows" => { "pwsh.exe -NoProfile -Command 'Set-Clipboard $url'" },
+    _ => { "Error: Unsupported OS" }
+  }
+}
 def yt_history [ --url (-u) = false] {
     let $history = open (gen_path)
     | get history
@@ -33,8 +42,8 @@ def yt_history [ --url (-u) = false] {
 }
 
 def rewatch [ ] {
-        yt_history --url true| uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
-                zig_player
-                print "Rewatching!"
+    yt_history --url true| uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | $in.url |
+    zig_player
+    print "Rewatching!"
 }
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
