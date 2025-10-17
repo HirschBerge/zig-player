@@ -33,7 +33,7 @@ def yt_history [ --url (-u) = false] {
 }
 
 def rewatch [ ] {
-        yt_history | uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
+        yt_history --url true| uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
                 zig_player
                 print "Rewatching!"
 }
