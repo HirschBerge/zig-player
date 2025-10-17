@@ -1,3 +1,4 @@
+set windows-shell := [ "pwsh.exe", "-NoProfile", "-c" ]
 run:
         zig build run --release=fast
 debug:
