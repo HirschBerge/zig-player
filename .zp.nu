@@ -10,7 +10,7 @@ def gen_path [ ] {
 def paste_to_clip [ url: string ] {
   match $nu.os-info.name {
     "linux" => { wl-copy $url },
-    "macos" => { pbcopy $url },
+    "macos" => { echo $url |pbcopy },
     "windows" => { "pwsh.exe -NoProfile -Command 'Set-Clipboard $url'" },
     _ => { "Error: Unsupported OS" }
   }
