@@ -42,8 +42,8 @@ def yt_history [ --url (-u) = false] {
 }
 
 def rewatch [ ] {
-    yt_history --url true| uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | $in.url |
-    zig_player
+    yt_history --url true| uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | paste_to_clip $in.url
+         zig_player
     print "Rewatching!"
 }
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
