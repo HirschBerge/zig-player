@@ -54,6 +54,10 @@ pub fn isMPVRunning(allocator: std.mem.Allocator, process_name: []const u8) !boo
         .allocator = allocator,
         .argv = &argv,
     });
+    defer {
+        allocator.free(result.stderr);
+        allocator.free(result.stdout);
+    }
     // NOTE: Check the process termination code.
     return switch (result.term) {
         .Exited => |exit_code| exit_code == 0,
