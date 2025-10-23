@@ -41,12 +41,25 @@ pub fn insert_data(
     var history_records = try dbase.prepare(query);
     defer history_records.deinit();
     const time = try time_helper.get_current_time();
+
+    // Create copies of the strings to ensure they live long enough
+
+    const allocator = std.heap.page_allocator;
+    const url_dupe = try allocator.dupe(u8, meta.url);
+    const title_dupe = try allocator.dupe(u8, meta.title);
+    const channel_dupe = try allocator.dupe(u8, meta.channel);
+    defer {
+        allocator.free(url_dupe);
+        allocator.free(channel_dupe);
+        allocator.free(title_dupe);
+    }
+
     try history_records.exec(.{}, .{
         .time = time,
-        .url = meta.url,
-        .channel = meta.channel,
+        .url = url_dupe, // Use the copies
+        .channel = channel_dupe,
         .length = meta.duration,
-        .title = meta.title,
+        .title = title_dupe,
     });
 }
 
