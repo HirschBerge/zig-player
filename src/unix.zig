@@ -11,12 +11,12 @@ pub fn play_video(url: []const u8) !void {
         // INFO: If we catch an MPV process, *assume* we created it in the past and has an ipc socket
         // See below for the flag we provided
         // Instead of launching MPV, instead write the needed data to the socket to add to queue.
-        std.debug.print("✅ {s} is running, adding video to queue.\n", .{process_to_check});
+        std.debug.print(" {s} is running, adding video to queue.\n", .{process_to_check});
         try sendMpvCommand(gpa.allocator(), url);
     } else {
         // INFO: If no MPV process is running, we want to start a new one.
         // The --input-ipc-sever allows us to interact with the instance via socket. See above
-        std.debug.print("❌ {s} isn't running, playing video.\n", .{process_to_check});
+        std.debug.print(" {s} isn't running, playing video.\n", .{process_to_check});
         const argv = [4][]const u8{
             "mpv",
             url,

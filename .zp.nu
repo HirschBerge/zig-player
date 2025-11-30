@@ -3,6 +3,7 @@ def rewatch [ ] {
                 zig_player
                 print "Rewatching!"
 }
+
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
 def yt_history [] {
         open ~/.cache/zig_player/history.db
