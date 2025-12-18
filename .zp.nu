@@ -16,12 +16,21 @@ let history_path = match $os_name {
 
 # NOTE: Requires the `sk` plugin for nushell (https://github.com/idanarye/nu_plugin_skim)
 def rewatch [ ] {
-  yt_history | uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
-  zig_player
+  match $os_name { 
+    "windows" => {
+      let $url = yt_history --url |sort-by time --reverse | to csv | gum table --separator=',' --return-column=5
+      pwsh -NoProfile -command $"Set-Clipboard ($url)"
+      ~/.scripts/zig-player/zig-out/bin/zig_player.exe
+    },
+    _ => {
+      yt_history --url | uniq-by title |sort-by time --reverse | sk --format {get title} --preview {} | wl-copy $in.url
+      zig_player
+    }
+  }
   print "Rewatching!"
 }
 
-def yt_history [ --url = false ] {
+def yt_history [ --url ] {
   let hist = open $history_path
   | get history
   | each { |video|
