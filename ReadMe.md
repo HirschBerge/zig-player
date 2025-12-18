@@ -51,7 +51,7 @@ Or you can always run your favorite zig build commands!
 # Nushell Helpers
 Sorry if you use other shells, Nushell is just more useful! It is cross-platform, so windows users get to partake!
 I have provided a couple handy functions baed around reading the Sqlite history db.
-```
+```nu
 source /path/to/.zp.nu # This can be anywhere. I recommend adding this to your $nu.config-path file
 yt_history
 ╭────┬──────────────┬─────────────────┬───────────────────────────────────────┬────────────────────────────────────────────────────┬─────────────────────────────────────────────╮

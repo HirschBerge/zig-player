@@ -1,0 +1,18 @@
+{
+  "tags": [
+    "TODO",
+    "FIXME",
+    "BUG",
+    "HACK",
+    "XXX",
+    "WARN",
+    "PERF"
+  ],
+  "include": [],
+  "exclude": [".zig-out/**"],
+  "json": false,
+  "flat": false,
+  "no_color": false,
+  "custom_pattern": null,
+  "case_sensitive": false
+}
