@@ -53,11 +53,10 @@ pub fn parse_json(data: []const u8) !Metadata {
 
 pub fn ytdlp_meta(url: []const u8) ![]const u8 {
     const allocator = std.heap.page_allocator; // Allocator for the child's output
-    const argv = [6][]const u8{
+    const argv = [5][]const u8{
         "yt-dlp",
         url,
-        "--cookies-from-browser",
-        "firefox", // TODO: Make this configurable.
+        "--profile=low-latency",
         "--print",
         "{ \"channel\": \"%(channel)s\", \"duration\": \"%(duration>%H:%M:%S)s\", \"title\": \"%(title)j\", \"url\": \"%(webpage_url)s\"}",
     };
